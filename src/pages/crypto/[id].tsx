@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
-import CryptoCard from "../components/CryptoCard";
-import Navbar from "../components/Navbar";
-import { fetchCryptocurrencies } from "../utils/fetchers";
+import CryptoCard from "../../components/CryptoCard";
+import Navbar from "../../components/Navbar";
+import { fetchCryptocurrencies } from "../../utils/fetchers";
 
 interface Cryptocurrency {
   id: string;
@@ -26,7 +26,7 @@ const HomePage: NextPage = () => {
   useEffect(() => {
     const loadCryptocurrencies = async () => {
       try {
-        const data = await fetchCryptocurrencies(page, sortBy); //error
+        const data = await fetchCryptocurrencies(page, sortBy);
         setCryptocurrencies(data);
       } catch (error) {
         console.error("Failed to fetch cryptocurrencies", error);
@@ -95,7 +95,7 @@ const HomePage: NextPage = () => {
           </button>
           <button
             onClick={() => setPage(page + 1)}
-            className="px-4 py-2 bg-blue-500 text-white rounded "
+            className="px-4 py-2 bg-blue-500 text-white rounded"
           >
             Next
           </button>

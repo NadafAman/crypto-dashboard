@@ -1,6 +1,21 @@
-import "@/styles/globals.css";
-import type { AppProps } from "next/app";
+import type { AppProps } from 'next/app';
+import { RecoilRoot } from 'recoil';
+import '../styles/globals.css';
+import Head from 'next/head';
 
-export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <RecoilRoot>
+      <Head>
+        <title>Crypto Dashboard</title>
+        <meta name="description" content="Cryptocurrency Market Dashboard" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+        <Component {...pageProps} />
+      </div>
+    </RecoilRoot>
+  );
 }
+
+export default MyApp;

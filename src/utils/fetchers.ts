@@ -100,3 +100,16 @@ export const fetchSingleCryptocurrency = async (id: string): Promise<Cryptocurre
     throw error;
   }
 };
+
+export const fetchCryptoHistoricalData = async (id: string, days: number = 30): Promise<[number, number][]> => {
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`
+    );
+    const data = await response.json();
+    return data.prices; // Returns an array of tuples [timestamp, price]
+  } catch (error) {
+    console.error("Error fetching historical data:", error);
+    throw error;
+  }
+};

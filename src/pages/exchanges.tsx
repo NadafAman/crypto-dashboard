@@ -1,109 +1,115 @@
-import React, { useState, useEffect } from "react";
-import { NextPage } from "next";
-import CryptoCard from "../components/CryptoCard";
-import Navbar from "../components/Navbar";
-import { fetchCryptocurrencies } from "../utils/fetchers";
+import { useEffect, useState } from 'react';  // Import useState
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { exchangesState, searchQueryState, sortCriteriaState, filteredExchangesSelector } from '@/recoil/exchangeAtoms';
+import { Exchange } from '../types/exchange'; 
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Navbar from '@/components/Navbar';
 
-interface Cryptocurrency {
-  id: string;
-  name: string;
-  symbol: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  image: string;
-}
-
-const HomePage: NextPage = () => {
-  const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>(
-    []
-  );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"price" | "market_cap" | "change">(
-    "price"
-  );
-  const [page, setPage] = useState(1);
+export default function ExchangeList() {
+  const [searchQuery, setSearchQuery] = useRecoilState(searchQueryState);
+  const [sortCriteria, setSortCriteria] = useRecoilState(sortCriteriaState);
+  const setExchanges = useSetRecoilState(exchangesState);
+  const filteredExchanges = useRecoilValue(filteredExchangesSelector);
+  
+  // Adding local state to manage hydration fix
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    const loadCryptocurrencies = async () => {
+    const fetchExchanges = async () => {
       try {
-        const data = await fetchCryptocurrencies(page, sortBy);
-        setCryptocurrencies(data);
+        const response = await fetch('https://api.coingecko.com/api/v3/exchanges');
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        const data: Partial<Exchange>[] = await response.json();
+
+        // Sanitize fetched data
+        const sanitizedData = data.map((exchange): Exchange => ({
+          id: exchange.id || '',
+          name: exchange.name || 'Unknown Exchange',
+          number_of_coins: exchange.number_of_coins || 0,
+          trade_volume_24h_btc: exchange.trade_volume_24h_btc || 0,
+          trust_score: exchange.trust_score ?? null,
+          url: exchange.url ?? '',
+        }));
+
+        setExchanges(sanitizedData);
+        setIsHydrated(true);  // Mark hydration as complete
       } catch (error) {
-        console.error("Failed to fetch cryptocurrencies", error);
+        console.error('Error fetching exchanges:', error);
       }
     };
 
-    loadCryptocurrencies();
-  }, [page, sortBy]);
+    fetchExchanges();
+  }, [setExchanges]);
 
-  const filteredCryptocurrencies = cryptocurrencies.filter((crypto) =>
-    crypto.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSortChange = (value: string) => {
+    const [field, direction] = value.split('-');
+    setSortCriteria({
+      field: field as keyof Exchange,
+      direction: direction as 'asc' | 'desc',
+    });
+  };
+
+  // Only render content after hydration is complete
+  if (!isHydrated) {
+    return <div>Loading...</div>;  // Fallback loading UI
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          Cryptocurrency Market
-        </h1>
-
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search cryptocurrencies..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 rounded-lg border dark:bg-gray-700 dark:text-white"
+    <div className="container mx-auto p-4">
+      <div className="mb-6 space-y-4">
+        <h1 className="text-2xl font-bold">Cryptocurrency Exchanges</h1>
+        <div className="flex flex-wrap gap-4">
+          <Input
+            placeholder="Search exchanges..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
           />
-        </div>
-
-        <div className="flex mb-4 space-x-4">
-          <select
-            value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as "price" | "market_cap" | "change")
-            }
-            className="p-2 rounded-lg border dark:bg-gray-700 dark:text-white"
+          <Select
+            value={`${sortCriteria.field || ''}-${sortCriteria.direction || ''}`}
+            onValueChange={handleSortChange}
           >
-            <option value="price">Sort by Price</option>
-            <option value="market_cap">Sort by Market Cap</option>
-            <option value="change">Sort by 24h Change</option>
-          </select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCryptocurrencies.map((crypto) => (
-            <CryptoCard
-              key={crypto.id}
-              id={crypto.id}
-              name={crypto.name}
-              symbol={crypto.symbol}
-              currentPrice={crypto.current_price}
-              priceChangePercentage24h={crypto.price_change_percentage_24h}
-              image={crypto.image}
-            />
-          ))}
-        </div>
-
-        <div className="flex justify-center mt-6 space-x-4">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setPage(page + 1)}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Next
-          </button>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue>
+                {sortCriteria.field ? `${sortCriteria.field} (${sortCriteria.direction})` : 'Sort by...'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="trade_volume_24h_btc-desc">Volume (High to Low)</SelectItem>
+              <SelectItem value="trade_volume_24h_btc-asc">Volume (Low to High)</SelectItem>
+              <SelectItem value="number_of_coins-desc">Coins (High to Low)</SelectItem>
+              <SelectItem value="number_of_coins-asc">Coins (Low to High)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
-      <Navbar />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredExchanges.map((exchange) => (
+          <Card key={exchange.id} className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <h2 className="text-xl font-semibold mb-2">{exchange.name}</h2>
+              <div className="space-y-2 text-sm">
+                <p className="flex justify-between">
+                  <span className="text-gray-600">24h Volume (BTC):</span>
+                  <span className="font-medium">
+                    {exchange.trade_volume_24h_btc.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-600">Listed Coins:</span>
+                  <span className="font-medium">{exchange.number_of_coins.toLocaleString()}</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Navbar/>
     </div>
   );
-};
-
-export default HomePage;
+}

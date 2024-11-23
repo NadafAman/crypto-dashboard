@@ -28,3 +28,5 @@ export const favoritesState = atom<Cryptocurrency[]>({
     },
   ],
 });
+
+

@@ -5,17 +5,17 @@ import { useRecoilState } from "recoil";
 import { currencyState } from "../recoil/atoms";
 import Navbar from "../components/Navbar";
 import axios from "axios";
+import { motion } from "framer-motion";
 
 // Dynamically import components
-const CurrencySelector = dynamic(() => 
+const CurrencySelector = dynamic(() =>
   import("../components/CurrencySelector").then((mod) => mod.CurrencySelector),
   { ssr: false }
 );
 
-const CryptoCard = dynamic(() => 
-  import("../components/CryptoCard"),
-  { ssr: false }
-);
+const CryptoCard = dynamic(() => import("../components/CryptoCard"), {
+  ssr: false,
+});
 
 interface Cryptocurrency {
   id: string;
@@ -34,17 +34,23 @@ const fetchCryptocurrencies = async (
   currency: string
 ): Promise<Cryptocurrency[]> => {
   try {
-    const { data } = await axios.get(`https://api.coingecko.com/api/v3/coins/markets`, {
-      params: {
-        vs_currency: currency.toLowerCase(),
-        order: sortBy === "price" ? "current_price_desc" : 
-               sortBy === "market_cap" ? "market_cap_desc" : 
-               "price_change_24h_desc",
-        per_page: perPage,
-        page: page,
-        sparkline: false,
-      },
-    });
+    const { data } = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets`,
+      {
+        params: {
+          vs_currency: currency.toLowerCase(),
+          order:
+            sortBy === "price"
+              ? "current_price_desc"
+              : sortBy === "market_cap"
+              ? "market_cap_desc"
+              : "price_change_24h_desc",
+          per_page: perPage,
+          page: page,
+          sparkline: false,
+        },
+      }
+    );
     return data;
   } catch (error) {
     console.error("Error fetching cryptocurrencies:", error);
@@ -53,9 +59,13 @@ const fetchCryptocurrencies = async (
 };
 
 const HomePage: NextPage = () => {
-  const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>([]);
+  const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>(
+    []
+  );
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"price" | "market_cap" | "change">("price");
+  const [sortBy, setSortBy] = useState<"price" | "market_cap" | "change">(
+    "price"
+  );
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,12 +107,14 @@ const HomePage: NextPage = () => {
 
   const filteredCryptocurrencies = React.useMemo(() => {
     if (!cryptocurrencies || cryptocurrencies.length === 0) return [];
-    
+
     return cryptocurrencies
       .filter((crypto) => {
         const searchLower = searchTerm.toLowerCase().trim();
-        return crypto.name.toLowerCase().includes(searchLower) ||
-               crypto.symbol.toLowerCase().includes(searchLower);
+        return (
+          crypto.name.toLowerCase().includes(searchLower) ||
+          crypto.symbol.toLowerCase().includes(searchLower)
+        );
       })
       .sort((a, b) => {
         switch (sortBy) {
@@ -111,7 +123,9 @@ const HomePage: NextPage = () => {
           case "market_cap":
             return b.market_cap - a.market_cap;
           case "change":
-            return b.price_change_percentage_24h - a.price_change_percentage_24h;
+            return (
+              b.price_change_percentage_24h - a.price_change_percentage_24h
+            );
           default:
             return 0;
         }
@@ -126,7 +140,7 @@ const HomePage: NextPage = () => {
         </h1>
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
-          <CurrencySelector 
+          <CurrencySelector
             value={currency}
             onChange={handleCurrencyChange}
             className="dark:bg-gray-700 dark:text-white"
@@ -158,30 +172,44 @@ const HomePage: NextPage = () => {
         )}
 
         {error && (
-          <div className="text-center text-red-500 my-8">
-            {error}
-          </div>
+          <div className="text-center text-red-500 my-8">{error}</div>
         )}
 
         {!isLoading && !error && (
           <>
             {filteredCryptocurrencies.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredCryptocurrencies.map((crypto) => (
-                  <CryptoCard
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {filteredCryptocurrencies.map((crypto, index) => (
+                  <motion.div
                     key={crypto.id}
-                    id={crypto.id}
-                    name={crypto.name}
-                    symbol={crypto.symbol}
-                    currentPrice={crypto.current_price}
-                    priceChangePercentage24h={crypto.price_change_percentage_24h}
-                    image={crypto.image}
-                  />
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: index * 0.1,
+                      duration: 0.5,
+                    }}
+                  >
+                    <CryptoCard
+                      id={crypto.id}
+                      name={crypto.name}
+                      symbol={crypto.symbol}
+                      currentPrice={crypto.current_price}
+                      priceChangePercentage24h={
+                        crypto.price_change_percentage_24h
+                      }
+                      image={crypto.image}
+                    />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             ) : (
               <div className="text-center text-gray-300 my-8">
-                {searchTerm 
+                {searchTerm
                   ? "No cryptocurrencies found matching your search."
                   : "No cryptocurrencies available."}
               </div>

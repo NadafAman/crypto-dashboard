@@ -3,6 +3,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
+import { motion } from "framer-motion";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { favoritesState, currencyState } from "../recoil/atoms";
 
@@ -56,7 +57,17 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
 
   return (
     <Link href={`/crypto/${id}`} className="block">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow relative">
+      <motion.div
+        whileHover={{
+          scale: 1.05,
+          transition: { duration: 0.3 },
+        }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow relative"
+      >
         {/* Favorite Toggle Button */}
         <button
           onClick={toggleFavorite}
@@ -99,7 +110,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
             {priceChangePercentage24h.toFixed(2)}%
           </span>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 };

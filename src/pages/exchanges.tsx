@@ -1,10 +1,22 @@
-import { useEffect, useState } from 'react';  
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import { exchangesState, searchQueryState, sortCriteriaState, filteredExchangesSelector } from '@/recoil/exchangeAtoms';
-import { Exchange } from '../types/exchange'; 
+import {
+  exchangesState,
+  searchQueryState,
+  sortCriteriaState,
+  filteredExchangesSelector,
+} from '@/recoil/exchangeAtoms';
+import { Exchange } from '../types/exchange';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Navbar from '@/components/Navbar';
 
 export default function ExchangeList() {
@@ -13,7 +25,7 @@ export default function ExchangeList() {
   const setExchanges = useSetRecoilState(exchangesState);
   const filteredExchanges = useRecoilValue(filteredExchangesSelector);
 
-  // Adding local state to manage hydration fix
+  // Local state for hydration fix
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -23,7 +35,6 @@ export default function ExchangeList() {
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         const data: Partial<Exchange>[] = await response.json();
 
-        // Sanitize fetched data
         const sanitizedData = data.map((exchange): Exchange => ({
           id: exchange.id || '',
           name: exchange.name || 'Unknown Exchange',
@@ -34,7 +45,7 @@ export default function ExchangeList() {
         }));
 
         setExchanges(sanitizedData);
-        setIsHydrated(true);  // Mark hydration as complete
+        setIsHydrated(true); // Mark hydration complete
       } catch (error) {
         console.error('Error fetching exchanges:', error);
       }
@@ -51,16 +62,23 @@ export default function ExchangeList() {
     });
   };
 
-  // Only render content after hydration is complete
+  // Show a fallback while hydration completes
   if (!isHydrated) {
-    return <div>Loading...</div>;  // Fallback loading UI
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto p-4"
+    >
       <div className="mb-6 space-y-4">
-        <h1 className="text-3xl m-7 font-bold text-center text-gray-100">Cryptocurrency Exchanges</h1>
-        <div className="flex justify-center  gap-4 flex-col md:flex-row items-center">
+        <h1 className="text-3xl m-7 font-bold text-center text-gray-100">
+          Cryptocurrency Exchanges
+        </h1>
+        <div className="flex justify-center gap-4 flex-col md:flex-row items-center">
           <Input
             placeholder="Search exchanges..."
             value={searchQuery}
@@ -74,43 +92,67 @@ export default function ExchangeList() {
           >
             <SelectTrigger className="w-[240px]">
               <SelectValue>
-                {sortCriteria.field ? `${sortCriteria.field} (${sortCriteria.direction})` : 'Sort by...'}
+                {sortCriteria.field
+                  ? `${sortCriteria.field} (${sortCriteria.direction})`
+                  : 'Sort by...'}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent >
-              <SelectItem value="trade_volume_24h_btc-desc">Volume (High to Low)</SelectItem>
-              <SelectItem value="trade_volume_24h_btc-asc">Volume (Low to High)</SelectItem>
-              <SelectItem value="number_of_coins-desc">Coins (High to Low)</SelectItem>
-              <SelectItem value="number_of_coins-asc">Coins (Low to High)</SelectItem>
+            <SelectContent>
+              <SelectItem value="trade_volume_24h_btc-desc">
+                Volume (High to Low)
+              </SelectItem>
+              <SelectItem value="trade_volume_24h_btc-asc">
+                Volume (Low to High)
+              </SelectItem>
+              <SelectItem value="number_of_coins-desc">
+                Coins (High to Low)
+              </SelectItem>
+              <SelectItem value="number_of_coins-asc">
+                Coins (Low to High)
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ staggerChildren: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
         {filteredExchanges.map((exchange) => (
-          <Card key={exchange.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{exchange.name}</h2>
-              <div className="space-y-2 text-sm">
-                <p className="flex justify-between">
-                  <span className="text-gray-600">24h Volume (BTC):</span>
-                  <span className="font-medium">
-                    {exchange.trade_volume_24h_btc.toLocaleString(undefined, {
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-gray-600">Listed Coins:</span>
-                  <span className="font-medium">{exchange.number_of_coins.toLocaleString()}</span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div
+            key={exchange.id}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{exchange.name}</h2>
+                <div className="space-y-2 text-sm">
+                  <p className="flex justify-between">
+                    <span className="text-gray-600">24h Volume (BTC):</span>
+                    <span className="font-medium">
+                      {exchange.trade_volume_24h_btc.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-gray-600">Listed Coins:</span>
+                    <span className="font-medium">
+                      {exchange.number_of_coins.toLocaleString()}
+                    </span>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
       <Navbar />
-    </div>
+    </motion.div>
   );
 }

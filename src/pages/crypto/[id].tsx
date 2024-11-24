@@ -7,6 +7,7 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
+import { motion } from 'framer-motion';
 
 // Registering Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -25,19 +26,17 @@ interface CryptoDetailsProps {
 
 const CryptoDetails: NextPage = () => {
   const router = useRouter();
-  const { id } = router.query; // Get the cryptocurrency ID from the URL
+  const { id } = router.query;
   const [cryptoDetails, setCryptoDetails] = useState<CryptoDetailsProps | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalData[]>([]);
 
   useEffect(() => {
     if (id) {
-      // Fetch cryptocurrency details and historical data
       fetchCryptoDetails(id as string);
       fetchHistoricalData(id as string);
     }
   }, [id]);
 
-  // Fetch cryptocurrency details (like market cap, name, symbol, etc.)
   const fetchCryptoDetails = async (cryptoId: string) => {
     try {
       const response = await fetch(
@@ -55,7 +54,6 @@ const CryptoDetails: NextPage = () => {
     }
   };
 
-  // Fetch historical price data for the selected cryptocurrency
   const fetchHistoricalData = async (cryptoId: string) => {
     try {
       const prices = await fetchCryptoHistoricalData(cryptoId);
@@ -69,7 +67,6 @@ const CryptoDetails: NextPage = () => {
     }
   };
 
-  // Prepare chart data for historical prices
   const chartData = {
     labels: historicalData.map(data => new Date(data.timestamp).toLocaleDateString()),
     datasets: [
@@ -84,14 +81,34 @@ const CryptoDetails: NextPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20">
-      <div className="container mx-auto px-6 py-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="container mx-auto px-6 py-8"
+      >
         {cryptoDetails ? (
-          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <motion.div
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+          >
             <h1 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
               {cryptoDetails.name} ({cryptoDetails.symbol.toUpperCase()})
             </h1>
-            <div className="flex justify-center mb-6">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex justify-center mb-6"
+            >
               <Image
                 src={cryptoDetails.image}
                 alt={cryptoDetails.name}
@@ -99,7 +116,7 @@ const CryptoDetails: NextPage = () => {
                 height={120}
                 className="rounded-full shadow-lg"
               />
-            </div>
+            </motion.div>
             <p className="text-center text-xl text-gray-700 dark:text-gray-300 mb-4">
               Market Cap: <span className="font-semibold">${cryptoDetails.market_cap.toLocaleString()}</span>
             </p>
@@ -108,21 +125,26 @@ const CryptoDetails: NextPage = () => {
               Price History (Last 30 Days)
             </h2>
             {historicalData.length > 0 ? (
-              <div className="w-full h-80 lg:h-96 xl:h-[500px] mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full h-80 lg:h-96 xl:h-[500px] mb-8"
+              >
                 <Line data={chartData} />
-              </div>
+              </motion.div>
             ) : (
               <p className="text-center text-gray-500 dark:text-gray-400">
                 Loading historical price data...
               </p>
             )}
-          </div>
+          </motion.div>
         ) : (
           <p className="text-center text-gray-500 dark:text-gray-400">Loading details...</p>
         )}
-      </div>
+      </motion.div>
       <Navbar />
-    </div>
+    </motion.div>
   );
 };
 

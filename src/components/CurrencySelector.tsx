@@ -1,43 +1,70 @@
-// src/components/CurrencySelector.tsx
 import React from 'react';
-import { useRecoilState } from 'recoil';
-import { currencyState } from '../recoil/atoms';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CURRENCIES = [
-  { code: 'usd', name: 'US Dollar' },
-  { code: 'eur', name: 'Euro' },
-  { code: 'gbp', name: 'British Pound' },
-  { code: 'jpy', name: 'Japanese Yen' },
-  { code: 'aud', name: 'Australian Dollar' },
-  { code: 'cad', name: 'Canadian Dollar' },
-];
+  { code: 'usd', name: 'US Dollar', symbol: '$' },
+  { code: 'eur', name: 'Euro', symbol: '€' },
+  { code: 'gbp', name: 'British Pound', symbol: '£' },
+  { code: 'jpy', name: 'Japanese Yen', symbol: '¥' },
+  { code: 'aud', name: 'Australian Dollar', symbol: 'A$' },
+  { code: 'cad', name: 'Canadian Dollar', symbol: 'C$' },
+] as const;
 
-export const CurrencySelector: React.FC = () => {
-  const [currency, setCurrency] = useRecoilState(currencyState);
+interface CurrencySelectorProps {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}
 
-  const handleCurrencyChange = (value: string) => {
-    setCurrency(value);
-  };
+export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
+  value,
+  onChange,
+  className = '',
+}) => {
+  const selectedCurrency = CURRENCIES.find(c => c.code === value);
 
   return (
-    <Select 
-      value={currency} 
-      onValueChange={handleCurrencyChange}
-      className='rounded-xl p-2 border dark:bg-gray-700 dark:text-white'
-    >
-      <SelectTrigger className="w-[180px] ">
-        <SelectValue placeholder="Select Currency">
-          {CURRENCIES.find(c => c.code === currency)?.name}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {CURRENCIES.map((curr) => (
-          <SelectItem key={curr.code} value={curr.code}>
-            {curr.name} ({curr.code.toUpperCase()})
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="relative">
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger 
+          className={`w-[200px] flex items-center justify-between px-3 py-2 text-sm ${className}`}
+        >
+          <SelectValue>
+            {selectedCurrency ? (
+              <span className="flex items-center gap-2">
+                <span className="font-mono">{selectedCurrency.symbol}</span>
+                {selectedCurrency.name}
+              </span>
+            ) : (
+              "Select Currency"
+            )}
+          </SelectValue>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </SelectTrigger>
+        <SelectContent>
+          {CURRENCIES.map((currency) => (
+            <SelectItem
+              key={currency.code}
+              value={currency.code}
+              className="flex items-center justify-between py-2 px-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <span className="flex items-center gap-2">
+                <span className="font-mono w-6">{currency.symbol}</span>
+                <span>{currency.name}</span>
+                <span className="text-gray-500 ml-1">
+                  ({currency.code.toUpperCase()})
+                </span>
+              </span>
+              {value === currency.code && (
+                <Check className="h-4 w-4" />
+              )}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
+
+export default CurrencySelector;

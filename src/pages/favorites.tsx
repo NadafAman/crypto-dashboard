@@ -24,6 +24,7 @@ const FavoritesPage: NextPage = () => {
     const loadFavorites = async () => {
       try {
         setIsLoading(true);
+        
         // Get favorite crypto IDs from localStorage
         const favoriteIds = JSON.parse(localStorage.getItem("favorites") || "[]");
         console.log("Favorite IDs from localStorage:", favoriteIds); // Debug log
@@ -35,7 +36,7 @@ const FavoritesPage: NextPage = () => {
         }
 
         // Fetch cryptocurrency data
-        const cryptoData = await fetchCryptocurrencies();
+        const cryptoData = await fetchCryptocurrencies(1, 'market_cap_desc', 50, 'usd');
         console.log("Fetched crypto data:", cryptoData); // Debug log
 
         // Filter only the favorited cryptocurrencies
@@ -52,6 +53,9 @@ const FavoritesPage: NextPage = () => {
       }
     };
 
+    // Load favorites when the component mounts
+    loadFavorites();
+
     // Add event listener for localStorage changes
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'favorites') {
@@ -60,7 +64,6 @@ const FavoritesPage: NextPage = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    loadFavorites();
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -80,7 +83,7 @@ const FavoritesPage: NextPage = () => {
           </div>
         ) : favorites.length === 0 ? (
           <div className="text-center text-gray-300 my-8">
-            <p className="mb-4">You havent added any cryptocurrencies to your favorites yet.</p>
+            <p className="mb-4">You have not added any cryptocurrencies to your favorites yet.</p>
             <Link
               href="/"
               className="text-blue-500 hover:text-blue-400 underline"

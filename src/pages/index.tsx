@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
 import dynamic from "next/dynamic";
-import { useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 import { currencyState } from "../recoil/atoms";
 import Navbar from "../components/Navbar";
 import axios from "axios";
@@ -51,7 +51,13 @@ const HomePage: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"price" | "market_cap" | "change">("price");
   const [page, setPage] = useState(1);
-  const currency = useRecoilValue(currencyState);
+  const [currency, setCurrency] = useRecoilState(currencyState);
+
+  // Handle currency change
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    setPage(1); // Reset to first page when currency changes
+  };
 
   // Fetch cryptocurrencies whenever dependencies change
   useEffect(() => {
@@ -78,9 +84,7 @@ const HomePage: NextPage = () => {
         case "market_cap":
           return b.market_cap - a.market_cap;
         case "change":
-          return (
-            b.price_change_percentage_24h - a.price_change_percentage_24h
-          );
+          return b.price_change_percentage_24h - a.price_change_percentage_24h;
         default:
           return 0;
       }
@@ -93,8 +97,12 @@ const HomePage: NextPage = () => {
           Cryptocurrency Market
         </h1>
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6 ">
-          <CurrencySelector />
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+          <CurrencySelector 
+            value={currency}
+            onChange={handleCurrencyChange}
+            className="dark:bg-gray-700 dark:text-white"
+          />
           <input
             type="text"
             placeholder="Search cryptocurrencies..."

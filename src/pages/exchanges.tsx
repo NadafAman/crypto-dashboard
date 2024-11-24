@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';  // Import useState
+import { useEffect, useState } from 'react';  
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { exchangesState, searchQueryState, sortCriteriaState, filteredExchangesSelector } from '@/recoil/exchangeAtoms';
 import { Exchange } from '../types/exchange'; 
@@ -12,7 +12,7 @@ export default function ExchangeList() {
   const [sortCriteria, setSortCriteria] = useRecoilState(sortCriteriaState);
   const setExchanges = useSetRecoilState(exchangesState);
   const filteredExchanges = useRecoilValue(filteredExchangesSelector);
-  
+
   // Adding local state to manage hydration fix
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -59,24 +59,25 @@ export default function ExchangeList() {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 space-y-4">
-        <h1 className="text-2xl font-bold">Cryptocurrency Exchanges</h1>
-        <div className="flex flex-wrap gap-4">
+        <h1 className="text-3xl m-7 font-bold text-center text-gray-100">Cryptocurrency Exchanges</h1>
+        <div className="flex justify-center  gap-4 flex-col md:flex-row items-center">
           <Input
             placeholder="Search exchanges..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
+            className="max-w-sm p-2 bg-gray-800 text-white rounded-lg border-violet-50 focus:ring-2 focus:ring-blue-500"
           />
           <Select
             value={`${sortCriteria.field || ''}-${sortCriteria.direction || ''}`}
             onValueChange={handleSortChange}
+            className="text-black bg-gray-400 rounded-lg"
           >
             <SelectTrigger className="w-[240px]">
               <SelectValue>
                 {sortCriteria.field ? `${sortCriteria.field} (${sortCriteria.direction})` : 'Sort by...'}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent >
               <SelectItem value="trade_volume_24h_btc-desc">Volume (High to Low)</SelectItem>
               <SelectItem value="trade_volume_24h_btc-asc">Volume (Low to High)</SelectItem>
               <SelectItem value="number_of_coins-desc">Coins (High to Low)</SelectItem>
@@ -109,7 +110,7 @@ export default function ExchangeList() {
           </Card>
         ))}
       </div>
-      <Navbar/>
+      <Navbar />
     </div>
   );
 }

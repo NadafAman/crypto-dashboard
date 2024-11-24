@@ -64,7 +64,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
             alt={name}
             width={40}
             height={40}
-            className="mr-4 "
+            className="mr-4 rounded-3xl"
           />
           <div>
             <h3 className="font-bold text-lg dark:text-white">{name}</h3>

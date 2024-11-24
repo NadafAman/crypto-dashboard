@@ -32,28 +32,28 @@ interface CryptoDetailsParams {
 
 const BASE_URL = 'https://api.coingecko.com/api/v3';
 
-export const fetchCryptocurrencies = async (
-  page: number = 1, 
-  sortBy: string = 'market_cap_desc', // Default sorting by market_cap_desc
-  perPage: number = 50, 
-  vsCurrency: string = 'usd'
-): Promise<Cryptocurrency[]> => {
-  try {
-    const { data } = await axios.get<Cryptocurrency[]>(`${BASE_URL}/coins/markets`, {
-      params: {
-        vs_currency: vsCurrency,
-        order: sortBy, // Use sortBy instead of the fixed 'market_cap_desc'
-        per_page: perPage,
-        page: page,
-        sparkline: false
-      },
-    });
-    return data;
-  } catch (error) {
-    console.error('Error fetching cryptocurrencies:', error);
-    throw error;
-  }
-};
+// export const fetchCryptocurrencies = async (
+//   page: number = 1, 
+//   sortBy: string = 'market_cap_desc', // Default sorting by market_cap_desc
+//   perPage: number = 50, 
+//   vsCurrency: string = 'usd'
+// ): Promise<Cryptocurrency[]> => {
+//   try {
+//     const { data } = await axios.get<Cryptocurrency[]>(`${BASE_URL}/coins/markets`, {
+//       params: {
+//         vs_currency: vsCurrency,
+//         order: sortBy, // Use sortBy instead of the fixed 'market_cap_desc'
+//         per_page: perPage,
+//         page: page,
+//         sparkline: false
+//       },
+//     });
+//     return data;
+//   } catch (error) {
+//     console.error('Error fetching cryptocurrencies:', error);
+//     throw error;
+//   }
+// };
 
 export const fetchCryptoDetails = async (
   id: string, 
@@ -110,6 +110,29 @@ export const fetchCryptoHistoricalData = async (id: string, days: number = 30): 
     return data.prices; // Returns an array of tuples [timestamp, price]
   } catch (error) {
     console.error("Error fetching historical data:", error);
+    throw error;
+  }
+};
+// src/utils/fetchers.ts
+export const fetchCryptocurrencies = async (
+  page: number = 1, 
+  sortBy: string = 'market_cap_desc', 
+  perPage: number = 50, 
+  vsCurrency: string = 'usd' // Add currency parameter with default USD
+): Promise<Cryptocurrency[]> => {
+  try {
+    const { data } = await axios.get<Cryptocurrency[]>(`${BASE_URL}/coins/markets`, {
+      params: {
+        vs_currency: vsCurrency, // Use the passed currency
+        order: sortBy,
+        per_page: perPage,
+        page: page,
+        sparkline: false
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching cryptocurrencies:', error);
     throw error;
   }
 };

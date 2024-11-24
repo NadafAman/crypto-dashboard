@@ -1,10 +1,10 @@
-// components/CryptoCard.tsx
+// src/components/CryptoCard.tsx
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { useRecoilState } from "recoil";
-import { favoritesState } from "../recoil/atoms";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { favoritesState, currencyState } from "../recoil/atoms";
 
 interface CryptoCardProps {
   id: string;
@@ -25,6 +25,17 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
 }) => {
   // Recoil state to manage favorites
   const [favorites, setFavorites] = useRecoilState(favoritesState);
+  const currency = useRecoilValue(currencyState);
+
+  // Currency symbol mapping
+  const currencySymbols: { [key: string]: string } = {
+    usd: "$",
+    eur: "€",
+    gbp: "£",
+    jpy: "¥",
+    aud: "A$",
+    cad: "C$",
+  };
 
   // Check if the current crypto is in favorites
   const isFavorite = favorites.some((fav) => fav.id === id);
@@ -58,7 +69,7 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         </button>
 
         {/* Crypto Info */}
-        <div className="flex items-center mb-4 ">
+        <div className="flex items-center mb-4">
           <Image
             src={image}
             alt={name}
@@ -77,7 +88,8 @@ const CryptoCard: React.FC<CryptoCardProps> = ({
         {/* Price and Price Change */}
         <div className="flex justify-between items-center">
           <span className="font-semibold text-xl dark:text-white">
-            ${currentPrice.toLocaleString()}
+            {currencySymbols[currency] || "$"}
+            {currentPrice.toLocaleString()}
           </span>
           <span
             className={`font-medium ${

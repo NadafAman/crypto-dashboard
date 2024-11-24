@@ -27,7 +27,7 @@ const FavoritesPage: NextPage = () => {
         setError(null);
         
         // Get favorite crypto IDs from localStorage with better error handling
-        let favoriteIds: string[] = [];
+        let favoriteIds: Cryptocurrency[] = [];
         try {
           const storedFavorites = localStorage.getItem("favorites");
           console.log("Raw stored favorites:", storedFavorites); // Debug raw storage
@@ -51,13 +51,15 @@ const FavoritesPage: NextPage = () => {
         }
 
         // Fetch cryptocurrency data with error handling
-        const cryptoData = await fetchCryptocurrencies(1, 'market_cap_desc', 250, 'usd');
+        const cryptoData = await fetchCryptocurrencies(1, 'price', 50, 'usd');
         console.log("Total fetched cryptocurrencies:", cryptoData.length);
 
         // Improved filtering with detailed logging
         const favoriteCryptos = cryptoData.filter((crypto: Cryptocurrency) => {
-          const isMatch = favoriteIds.includes(crypto.id);
-          console.log(`Checking crypto ${crypto.id}: ${isMatch ? 'matched' : 'not matched'}`);
+          const isMatch = favoriteIds.find(ele => ele.id === crypto.id);
+          if(isMatch) {
+            console.log(favoriteIds);
+          }
           return isMatch;
         });
 

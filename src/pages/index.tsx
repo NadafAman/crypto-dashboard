@@ -136,14 +136,14 @@ const HomePage: NextPage = () => {
             placeholder="Search by name or symbol..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-72 p-2 rounded-lg border dark:bg-gray-700 dark:text-white"
+            className="w-full sm:w-72 p-2 rounded-lg border text-black bg-white"
           />
           <select
             value={sortBy}
             onChange={(e) =>
               setSortBy(e.target.value as "price" | "market_cap" | "change")
             }
-            className="w-full sm:w-48 p-2 rounded-lg border dark:bg-gray-700 dark:text-white"
+            className="w-full sm:w-48 p-2 rounded-lg border text-black bg-white"
           >
             <option value="price">Sort by Price</option>
             <option value="market_cap">Sort by Market Cap</option>

@@ -1,4 +1,3 @@
-// pages/favorites.tsx
 import React, { useState, useEffect } from "react";
 import { NextPage } from "next";
 import CryptoCard from "../components/CryptoCard";
@@ -19,46 +18,71 @@ interface Cryptocurrency {
 const FavoritesPage: NextPage = () => {
   const [favorites, setFavorites] = useState<Cryptocurrency[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadFavorites = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         
-        // Get favorite crypto IDs from localStorage
-        const favoriteIds = JSON.parse(localStorage.getItem("favorites") || "[]");
-        console.log("Favorite IDs from localStorage:", favoriteIds); // Debug log
+        // Get favorite crypto IDs from localStorage with better error handling
+        let favoriteIds: string[] = [];
+        try {
+          const storedFavorites = localStorage.getItem("favorites");
+          console.log("Raw stored favorites:", storedFavorites); // Debug raw storage
+          
+          if (storedFavorites) {
+            favoriteIds = JSON.parse(storedFavorites);
+          }
+        } catch (e) {
+          console.error("Error parsing favorites from localStorage:", e);
+          setError("Failed to load favorites from storage");
+          return;
+        }
 
-        if (favoriteIds.length === 0) {
+        console.log("Parsed favorite IDs:", favoriteIds);
+
+        if (!Array.isArray(favoriteIds) || favoriteIds.length === 0) {
+          console.log("No favorites found or invalid format");
           setFavorites([]);
           setIsLoading(false);
           return;
         }
 
-        // Fetch cryptocurrency data
-        const cryptoData = await fetchCryptocurrencies(1, 'market_cap_desc', 50, 'usd');
-        console.log("Fetched crypto data:", cryptoData); // Debug log
+        // Fetch cryptocurrency data with error handling
+        const cryptoData = await fetchCryptocurrencies(1, 'market_cap_desc', 250, 'usd');
+        console.log("Total fetched cryptocurrencies:", cryptoData.length);
 
-        // Filter only the favorited cryptocurrencies
-        const favoriteCryptos = cryptoData.filter((crypto: Cryptocurrency) => 
-          favoriteIds.includes(crypto.id)
-        );
-        console.log("Filtered favorites:", favoriteCryptos); // Debug log
+        // Improved filtering with detailed logging
+        const favoriteCryptos = cryptoData.filter((crypto: Cryptocurrency) => {
+          const isMatch = favoriteIds.includes(crypto.id);
+          console.log(`Checking crypto ${crypto.id}: ${isMatch ? 'matched' : 'not matched'}`);
+          return isMatch;
+        });
+
+        console.log("Final filtered favorites:", favoriteCryptos);
+
+        if (favoriteCryptos.length === 0 && favoriteIds.length > 0) {
+          console.warn("No matches found despite having favorite IDs");
+          setError("Unable to find current data for your favorite cryptocurrencies");
+        }
 
         setFavorites(favoriteCryptos);
       } catch (error) {
         console.error("Failed to fetch favorites:", error);
+        setError("Failed to load cryptocurrency data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Load favorites when the component mounts
     loadFavorites();
 
     // Add event listener for localStorage changes
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'favorites') {
+        console.log("Storage change detected for favorites");
         loadFavorites();
       }
     };
@@ -76,6 +100,12 @@ const FavoritesPage: NextPage = () => {
         <h1 className="text-3xl m-7 font-bold text-center text-gray-100">
           Favorite Cryptocurrencies
         </h1>
+
+        {error && (
+          <div className="text-red-400 text-center mb-4">
+            {error}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="text-center text-gray-300 my-8">

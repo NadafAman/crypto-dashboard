@@ -33,17 +33,23 @@ const fetchCryptocurrencies = async (
   perPage: number,
   currency: string
 ): Promise<Cryptocurrency[]> => {
-  const order = sortBy === "price" ? "market_cap_desc" : sortBy;
-  const { data } = await axios.get(`https://api.coingecko.com/api/v3/coins/markets`, {
-    params: {
-      vs_currency: currency,
-      order: order,
-      per_page: perPage,
-      page: page,
-      sparkline: false,
-    },
-  });
-  return data;
+  try {
+    const { data } = await axios.get(`https://api.coingecko.com/api/v3/coins/markets`, {
+      params: {
+        vs_currency: currency.toLowerCase(),
+        order: sortBy === "price" ? "current_price_desc" : 
+               sortBy === "market_cap" ? "market_cap_desc" : 
+               "price_change_24h_desc",
+        per_page: perPage,
+        page: page,
+        sparkline: false,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error("Error fetching cryptocurrencies:", error);
+    return [];
+  }
 };
 
 const HomePage: NextPage = () => {
@@ -51,44 +57,66 @@ const HomePage: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"price" | "market_cap" | "change">("price");
   const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useRecoilState(currencyState);
 
-  // Handle currency change
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
-    setPage(1); // Reset to first page when currency changes
+    setPage(1);
+    setSearchTerm(""); // Reset search when currency changes
   };
 
-  // Fetch cryptocurrencies whenever dependencies change
   useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
+
     const loadCryptocurrencies = async () => {
       try {
         const data = await fetchCryptocurrencies(page, sortBy, 50, currency);
-        setCryptocurrencies(data);
+        if (isMounted) {
+          setCryptocurrencies(data);
+          setIsLoading(false);
+        }
       } catch (error) {
-        console.error("Failed to fetch cryptocurrencies", error);
+        if (isMounted) {
+          console.error("Failed to fetch cryptocurrencies", error);
+          setError("Failed to load cryptocurrencies. Please try again later.");
+          setIsLoading(false);
+        }
       }
     };
+
     loadCryptocurrencies();
+
+    return () => {
+      isMounted = false;
+    };
   }, [page, sortBy, currency]);
 
-  // Filter and sort cryptocurrencies based on search term and sorting criteria
-  const filteredCryptocurrencies = cryptocurrencies
-    .filter((crypto) =>
-      crypto.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price":
-          return b.current_price - a.current_price;
-        case "market_cap":
-          return b.market_cap - a.market_cap;
-        case "change":
-          return b.price_change_percentage_24h - a.price_change_percentage_24h;
-        default:
-          return 0;
-      }
-    });
+  const filteredCryptocurrencies = React.useMemo(() => {
+    if (!cryptocurrencies || cryptocurrencies.length === 0) return [];
+    
+    return cryptocurrencies
+      .filter((crypto) => {
+        const searchLower = searchTerm.toLowerCase().trim();
+        return crypto.name.toLowerCase().includes(searchLower) ||
+               crypto.symbol.toLowerCase().includes(searchLower);
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "price":
+            return b.current_price - a.current_price;
+          case "market_cap":
+            return b.market_cap - a.market_cap;
+          case "change":
+            return b.price_change_percentage_24h - a.price_change_percentage_24h;
+          default:
+            return 0;
+        }
+      });
+  }, [cryptocurrencies, searchTerm, sortBy]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pb-20">
@@ -105,7 +133,7 @@ const HomePage: NextPage = () => {
           />
           <input
             type="text"
-            placeholder="Search cryptocurrencies..."
+            placeholder="Search by name or symbol..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-72 p-2 rounded-lg border dark:bg-gray-700 dark:text-white"
@@ -123,36 +151,48 @@ const HomePage: NextPage = () => {
           </select>
         </div>
 
-        {cryptocurrencies.length === 0 && (
+        {isLoading && (
           <div className="text-center text-gray-300 my-8">
             Loading cryptocurrencies...
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCryptocurrencies.map((crypto) => (
-            <CryptoCard
-              key={crypto.id}
-              id={crypto.id}
-              name={crypto.name}
-              symbol={crypto.symbol}
-              currentPrice={crypto.current_price}
-              priceChangePercentage24h={crypto.price_change_percentage_24h}
-              image={crypto.image}
-            />
-          ))}
-        </div>
-
-        {filteredCryptocurrencies.length === 0 && cryptocurrencies.length > 0 && (
-          <div className="text-center text-gray-300 my-8">
-            No cryptocurrencies found matching your search.
+        {error && (
+          <div className="text-center text-red-500 my-8">
+            {error}
           </div>
+        )}
+
+        {!isLoading && !error && (
+          <>
+            {filteredCryptocurrencies.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCryptocurrencies.map((crypto) => (
+                  <CryptoCard
+                    key={crypto.id}
+                    id={crypto.id}
+                    name={crypto.name}
+                    symbol={crypto.symbol}
+                    currentPrice={crypto.current_price}
+                    priceChangePercentage24h={crypto.price_change_percentage_24h}
+                    image={crypto.image}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-300 my-8">
+                {searchTerm 
+                  ? "No cryptocurrencies found matching your search."
+                  : "No cryptocurrencies available."}
+              </div>
+            )}
+          </>
         )}
 
         <div className="flex justify-center mt-6 space-x-4">
           <button
             onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1}
+            disabled={page === 1 || isLoading}
             className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
           >
             Previous
@@ -160,7 +200,8 @@ const HomePage: NextPage = () => {
           <span className="text-gray-200">Page {page}</span>
           <button
             onClick={() => setPage((prev) => prev + 1)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            disabled={isLoading || filteredCryptocurrencies.length === 0}
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
           >
             Next
           </button>
